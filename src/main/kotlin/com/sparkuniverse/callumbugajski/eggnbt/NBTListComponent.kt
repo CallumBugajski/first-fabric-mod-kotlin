@@ -6,12 +6,12 @@ import gg.essential.elementa.components.TreeListComponent
 import gg.essential.elementa.components.TreeNode
 import gg.essential.elementa.components.UIText
 import gg.essential.elementa.components.inspector.ArrowComponent
+import gg.essential.elementa.constraints.CenterConstraint
 import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.constrain
-import gg.essential.elementa.dsl.pixels
+import net.minecraft.nbt.AbstractNbtList
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
-import net.minecraft.nbt.NbtList
 
 class NBTListComponent(private val nbtCompound: NbtCompound) : TreeListComponent() {
 
@@ -26,27 +26,29 @@ class NBTListComponent(private val nbtCompound: NbtCompound) : TreeListComponent
     private fun createTree(): List<TreeNode> {
         val node = TextNode("Root")
         for (key in nbtCompound.keys) {
-            createNode(nbtCompound.get(key)!!, node, key)
+            addNodeToTree(nbtCompound.get(key)!!, node, key)
         }
         return listOf(node)
     }
 
-    private fun createNode(nbtElement: NbtElement, treeNode: TreeNode, name: String) {
+    private fun addNodeToTree(nbtElement: NbtElement, treeNode: TreeNode, name: String) {
         when (nbtElement) {
             is NbtCompound -> {
                 val node = TextNode(name)
                 treeNode.addChild(node)
                 for (key in nbtElement.keys) {
-                    createNode(nbtElement.get(key)!!, node, key)
+                    addNodeToTree(nbtElement.get(key)!!, node, key)
                 }
             }
-            is NbtList -> {
+
+            is AbstractNbtList<*> -> {
                 val node = TextNode(name)
                 treeNode.addChild(node)
-                for (internalElement in nbtElement.listIterator()) {
-                    createNode(internalElement, node, "List Item")
+                for (internalElement in nbtElement) {
+                    addNodeToTree(internalElement, node, "List Item")
                 }
             }
+
             else -> {
                 treeNode.addChild(TextNode(name + ": " + nbtElement.asString()))
             }
@@ -62,7 +64,7 @@ class NBTListComponent(private val nbtCompound: NbtCompound) : TreeListComponent
         override fun getPrimaryComponent(): UIComponent {
             return UIText(text).constrain {
                 x = SiblingConstraint()
-                y = 1.pixels()
+                y = CenterConstraint()
             }
         }
 
